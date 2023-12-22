@@ -9,6 +9,7 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Wrench.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
@@ -53,6 +54,8 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   Eigen::Quaterniond orientation_d_;
   Eigen::Vector3d position_d_target_;
   Eigen::Quaterniond orientation_d_target_;
+  Eigen::Matrix<double, 6, 1> f_ext_;
+  Eigen::Matrix<double, 6, 1> f_ext_target_;
 
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<tas_controllers::compliance_paramConfig>>
@@ -64,6 +67,9 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   // Equilibrium pose subscriber
   ros::Subscriber sub_equilibrium_pose_;
   void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+
+  ros::Subscriber sub_external_force_;
+  void externalForceCallback(const geometry_msgs::WrenchConstPtr& msg);
 };
 
 }  // namespace franka_example_controllers

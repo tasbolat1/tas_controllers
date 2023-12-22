@@ -23,6 +23,10 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
       "/equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
       ros::TransportHints().reliable().tcpNoDelay());
 
+  sub_external_force_ = node_handle.subscribe(
+      "/external_force", 20, &CartesianImpedanceController::externalForceCallback, this,
+      ros::TransportHints().reliable().tcpNoDelay());
+
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR_STREAM("CartesianImpedanceController: Could not read parameter arm_id");
@@ -102,6 +106,9 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
 
+  f_ext_.setZero();
+  f_ext_target_.setZero();
+
   return true;
 }
 
@@ -162,7 +169,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
 
   // compute control
   // allocate variables
-  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7);
+  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7), tau_ext(7);
 
   // pseudoinverse for nullspace handling
   // kinematic pseuoinverse
@@ -177,8 +184,18 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         (2.0 * sqrt(nullspace_stiffness_)) * dq);
+
+
+  // external force command
+  tau_ext = jacobian.transpose() * f_ext_;
+
+  // ROS_WARN_STREAM_THROTTLE(0.5, "force:" << f_ext_);
+  // ROS_WARN_STREAM_THROTTLE(0.5, "tau_ext:" << tau_ext);
+
   // Desired torque
-  tau_d << tau_task + tau_nullspace + coriolis;
+  // tau_d << tau_task + tau_nullspace + coriolis;
+  tau_d << tau_task + tau_nullspace + coriolis + tau_ext;
+
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
   for (size_t i = 0; i < 7; ++i) {
@@ -195,6 +212,8 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
       filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+
+  f_ext_ = filter_params_ * f_ext_target_ + (1.0 - filter_params_) * f_ext_;
 }
 
 Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
@@ -235,6 +254,25 @@ void CartesianImpedanceController::equilibriumPoseCallback(
   if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
     orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
   }
+}
+
+void CartesianImpedanceController::externalForceCallback(
+    const geometry_msgs::WrenchConstPtr& msg) {
+
+  f_ext_target_.head(3) << msg->force.x, msg->force.y, msg->force.z;
+  f_ext_target_.tail(3) << msg->torque.x, msg->torque.y, msg->torque.z;
+
+  // ROS_WARN_STREAM_THROTTLE(0.5, "force_target:" << f_ext_target_);
+  // ROS_WARN_STREAM_THROTTLE(0.5, "force_target z:" << msg->force.z);
+
+
+  // position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+  // Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
+  // orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
+  //     msg->pose.orientation.z, msg->pose.orientation.w;
+  // if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
+  //   orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+  // }
 }
 
 }  // namespace franka_example_controllers
