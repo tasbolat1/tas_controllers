@@ -3,8 +3,8 @@
 
   <arg name="stopped" default="false" />
 
-  <rosparam command="load" file="$(find franka_example_controllers)/config/tas_controllers.yaml" />
-  <node unless="$(arg stopped)" name="controller_spawner_ci" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="cartesian_impedance_example_controller"/>
-  <node if="$(arg stopped)" name="controller_spawner_ci" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="--stopped cartesian_impedance_example_controller"/>  
+  <rosparam command="load" file="$(find tas_controllers)/config/tas_controllers.yaml" />
+  <node unless="$(arg stopped)" name="controller_spawner_ci" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="cartesian_impedance_controller"/>
+  <node if="$(arg stopped)" name="controller_spawner_ci" pkg="controller_manager" type="spawner" respawn="false" output="screen"  args="--stopped cartesian_impedance_controller"/>  
   <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
 </launch>

@@ -1,0 +1,18 @@
+data_circular1.txt - 400, 30, 0,   0,0,0
+data_circular2.txt - 400, 30, 0,   0,0,20
+data_circular3.txt - 400, 30, 0,   20,0,0
+data_circular4.txt - 400, 30, 0,   0,20,0
+
+
+SWAB
+data_swab_1.txt - 400,30, 0 - no movement
+data_swab_2.txt - 400,30, 0 - proper
+data_swab_3.txt - 400,30, 0 - corrupted
+
+PCR
+data_pcr_1.txt - 400,30, 0 - straight
+data_pcr_2.txt - 400,30, 0 - straight corrupted
+data_pcr_3.txt - 400,30, 0 - up
+data_pcr_4.txt - 400,30, 0 - up corrupted
+data_pcr_5.txt - 400,30, 0 - down
+data_pcr_6.txt - 400,30, 0 - down corrupted

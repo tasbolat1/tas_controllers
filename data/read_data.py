@@ -6,7 +6,7 @@ import pandas as pd
 column_names = ["x_target", "y_target", "z_target", "q0_target", "q1_target", "q2_target", "q3_target",
                 "x", "y", "z", "q0", "q1", "q2", "q3",
                  "t", "theta"]
-df = pd.read_csv("data_circular_2.txt", names=column_names)
+df = pd.read_csv("data_circular.txt", names=column_names)
 df.t = df.t-df.t[0]
 df.t = 1e-9*df.t
 
